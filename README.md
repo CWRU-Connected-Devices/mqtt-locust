@@ -6,6 +6,12 @@ This extends [Locust](http://locust.io) to load test MQTT (publishing only, curr
 
 It relies on the [Python Paho](https://eclipse.org/paho/clients/python/) MQTT Client library.
 
+## Acknowledgements
+
+This was originally developed by [Andrew Mason](https://github.com/ajm188) and [Matthew Bentley](https://github.com/matthewbentley)
+
+## Introduction
+
 The `mqtt_locust.py` provides a **MQTTLocust** class that your `locustfile.py` should include. Here is a short exampe:
 
 ```python
@@ -54,3 +60,5 @@ To start MQTT Locust, specify a host with a URL scheme of "mqtt://", like:
 ```bash
 locust --host=mqtt://somedomain.com:1883
 ```
+
+
