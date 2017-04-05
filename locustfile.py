@@ -11,6 +11,7 @@ resource.setrlimit(resource.RLIMIT_NOFILE, (999999, 999999))
 TIMEOUT = 6
 REPEAT = 100
 
+
 class MyTaskSet(TaskSet):
     @task(1)
     def qos2(self):
@@ -18,12 +19,14 @@ class MyTaskSet(TaskSet):
                 'lamp/set_config', self.payload(), qos=2, timeout=TIMEOUT,
                 repeat=REPEAT, name='qos2 publish'
                 )
+
     @task(1)
     def qos1(self):
         self.client.publish(
                 'lamp/set_config', self.payload(), qos=1, timeout=TIMEOUT,
                 repeat=REPEAT, name='qos1 publish'
                 )
+
     @task(1)
     def qos0(self):
         self.client.publish(
