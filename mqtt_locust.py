@@ -1,6 +1,7 @@
 import random
 import time
 import sys
+from urlparse import urlparse
 
 import paho.mqtt.client as mqtt
 from locust import Locust
@@ -46,20 +47,24 @@ class Message(object):
         return self.timeout is not None and total_time > self.timeout
 
 
-class MQTTClient(mqtt.Client):
+class MQTTClient:
 
     def __init__(self, *args, **kwargs):
-        super(MQTTClient, self).__init__(*args, **kwargs)
-        self.on_publish = self._on_publish
-        self.on_disconnect = self._on_disconnect
+        self.mqtt = mqtt.Client(*args, **kwargs)
+        self.mqtt.on_publish = self._on_publish
+        self.mqtt.on_disconnect = self._on_disconnect
         self.mmap = {}
+
+    def connect_and_start_loop(self, host, port):
+        self.mqtt.connect(host, port)
+        self.mqtt.loop_start()
 
     def publish(self, topic, payload=None, repeat=1, name='mqtt', **kwargs):
         timeout = kwargs.pop('timeout', 5)
         for i in range(repeat):
             start_time = time.time()
             try:
-                err, mid = super(MQTTClient, self).publish(
+                err, mid = self.mqtt.publish(
                     topic,
                     payload=payload,
                     **kwargs
@@ -129,12 +134,26 @@ class MQTTLocust(Locust):
 
     def __init__(self, *args, **kwargs):
         super(Locust, self).__init__(*args, **kwargs)
+
+        host_error = False
+
         if self.host is None:
-            raise LocustError("You must specify a host")
+            host_error = True
+        else:
+            urlparts = urlparse(self.host)
+            if urlparts.scheme.lower() != 'mqtt':
+                host_error = True
+            elif not urlparts.netloc:
+                host_error = True
+            else:
+                try:
+                    [host, port] = urlparts.netloc.split(":")
+                except:
+                    host, port = urlparts.netloc, 1883
+
+        if host_error:
+            raise LocustError("You must specify a host of the form "
+                              "mqtt://hostname[:port]")
         self.client = MQTTClient()
-        try:
-            [host, port] = self.host.split(":")
-        except:
-            host, port = self.host, 1883
-        self.client.connect(host, port=port)
-        self.client.loop_start()
+
+        self.client.connect_and_start_loop(host, port=port)
