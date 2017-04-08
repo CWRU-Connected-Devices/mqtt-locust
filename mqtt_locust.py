@@ -112,7 +112,7 @@ class MQTTClient:
             response_time=0,
             exception=DisconnectError("disconnected"),
         )
-        self.reconnect()
+        self.mqtt.reconnect()
 
     def check_for_locust_timeouts(self, end_time):
         timed_out = [mid for mid, msg in dict(self.mmap).iteritems()
