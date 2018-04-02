@@ -42,6 +42,7 @@ class MyTaskSet(TaskSet):
                 's': random.random(),
             },
             'brightness': random.random(),
+            'client': 'locust',
         }
         return json.dumps(payload)
 
