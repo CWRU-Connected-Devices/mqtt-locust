@@ -4,6 +4,7 @@ import sys
 from urllib.parse import urlparse
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import MQTT_ERR_SUCCESS, error_string
 from locust import Locust
 from locust import task
 from locust import TaskSet
@@ -34,9 +35,10 @@ class DisconnectError(Exception):
     pass
 
 
-class Message(object):
+class PendingMqttMessage(object):
 
-    def __init__(self, topic, payload, start_time, timeout, name):
+    def __init__(self, msginfo, topic, payload, start_time, timeout, name):
+        self.msginfo = msginfo
         self.topic = topic
         self.payload = payload
         self.start_time = start_time
@@ -64,15 +66,15 @@ class MQTTClient:
         for i in range(repeat):
             start_time = time.time()
             try:
-                err, mid = self.mqtt.publish(
+                msginfo = self.mqtt.publish(
                     topic,
                     payload=payload,
                     **kwargs
                 )
-                if err:
-                    raise ValueError(err)
-                self.mmap[mid] = Message(
-                        topic, payload, start_time, timeout, name
+                if msginfo.rc != MQTT_ERR_SUCCESS:
+                    raise ValueError(error_string(msginfo.rc))
+                self.mmap[msginfo.mid] = PendingMqttMessage(
+                        msginfo, topic, payload, start_time, timeout, name
                         )
             except Exception as e:
                 total_time = time.time() - start_time
