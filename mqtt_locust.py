@@ -1,7 +1,7 @@
 import random
 import time
 import sys
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 import paho.mqtt.client as mqtt
 from locust import Locust
@@ -115,7 +115,7 @@ class MQTTClient:
         self.mqtt.reconnect()
 
     def check_for_locust_timeouts(self, end_time):
-        timed_out = [mid for mid, msg in dict(self.mmap).iteritems()
+        timed_out = [mid for mid, msg in dict(self.mmap).items()
                      if msg.timed_out(end_time - msg.start_time)]
         for mid in timed_out:
             msg = self.mmap.pop(mid)
@@ -148,7 +148,8 @@ class MQTTLocust(Locust):
             else:
                 try:
                     [host, port] = urlparts.netloc.split(":")
-                except:
+                    port = int(port) 
+                except ValueError:
                     host, port = urlparts.netloc, 1883
 
         if host_error:
