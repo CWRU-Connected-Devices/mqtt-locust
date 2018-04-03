@@ -37,13 +37,11 @@ class DisconnectError(Exception):
 
 class PendingMqttMessage(object):
 
-    def __init__(self, msginfo, topic, payload, start_time, timeout, name):
-        self.msginfo = msginfo
-        self.topic = topic
-        self.payload = payload
+    def __init__(self, start_time, timeout, name, payload_size):
         self.start_time = start_time
         self.timeout = timeout
         self.name = name
+        self.payload_size = payload_size
 
     def timed_out(self, total_time):
         return self.timeout is not None and total_time > self.timeout
@@ -72,9 +70,9 @@ class MQTTClient:
                     **kwargs
                 )
                 if msginfo.rc != MQTT_ERR_SUCCESS:
-                    raise ValueError(error_string(msginfo.rc))
+                    raise Exception(error_string(msginfo.rc))
                 self.mmap[msginfo.mid] = PendingMqttMessage(
-                        msginfo, topic, payload, start_time, timeout, name
+                        start_time, timeout, name, len(payload),
                         )
             except Exception as e:
                 total_time = time.time() - start_time
@@ -103,7 +101,7 @@ class MQTTClient:
                 request_type='mqtt',
                 name=message.name,
                 response_time=total_time,
-                response_length=len(message.payload),
+                response_length=message.payload_size,
             )
         self.check_for_locust_timeouts(end_time)
 
