@@ -67,11 +67,21 @@ class MQTTClient:
         self.mqtt.on_disconnect = self._on_disconnect
         self.mmap = {}
 
-    def connect_and_start_loop(self, host, port):
-        self.mqtt.connect(host, port)
+    def connect_and_start_loop(self):
+        self.mqtt.connect(self.mqtt_host, self.mqtt_port)
         self.mqtt.loop_start()
 
+    def is_connected(self):
+        # this is crude
+        return self.mqtt._sock is not None
+
+    def connect_if_necessary(self):
+        if not self.is_connected():
+            self.connect_and_start_loop()
+
     def publish(self, topic, payload=None, repeat=1, name='mqtt', **kwargs):
+        # this is a kludge - should not be necessary
+        self.connect_if_necessary()
         timeout = kwargs.pop('timeout', 5)
         for i in range(repeat):
             start_time = time.time()
@@ -166,13 +176,14 @@ class MQTTLocust(Locust):
             else:
                 try:
                     [host, port] = urlparts.netloc.split(":")
-                    port = int(port) 
+                    port = int(port)
                 except ValueError:
                     host, port = urlparts.netloc, 1883
 
         if host_error:
             raise LocustError("You must specify a host of the form "
                               "mqtt://hostname[:port]")
-        self.client = MQTTClient()
 
-        self.client.connect_and_start_loop(host, port=port)
+        self.client = MQTTClient()
+        self.client.mqtt_host = host
+        self.client.mqtt_port = port
