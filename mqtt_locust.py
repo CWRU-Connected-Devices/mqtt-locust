@@ -2,6 +2,7 @@ import random
 import time
 import sys
 from urllib.parse import urlparse
+import gc
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import MQTT_ERR_SUCCESS, error_string
@@ -60,6 +61,7 @@ class PendingMqttMessage(object):
 class MQTTClient:
 
     def __init__(self, *args, **kwargs):
+        self._count_of_on_publish = 0
         self.mqtt = mqtt.Client(*args, **kwargs)
         self.mqtt.on_publish = self._on_publish
         self.mqtt.on_disconnect = self._on_disconnect
@@ -95,6 +97,7 @@ class MQTTClient:
 
     def _on_publish(self, client, userdata, mid):
         end_time = time.time()
+        self._count_of_on_publish += 1
         message = self.mmap.pop(mid, None)
         if message is None:
             return
@@ -113,7 +116,12 @@ class MQTTClient:
                 response_time=total_time,
                 response_length=message.payload_size,
             )
-        self.check_for_locust_timeouts(end_time)
+
+        # periodically check all pending messages for timeouts
+        if self._count_of_on_publish % 1000 == 0:
+            self.check_for_locust_timeouts(end_time)
+            # periodic force garbage collection
+            gc.collect()
 
     def _on_disconnect(self, client, userdata, rc):
         fire_locust_failure(
