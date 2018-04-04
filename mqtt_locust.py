@@ -17,7 +17,7 @@ def time_delta(t1, t2):
 
 
 def round_seconds_to_microseconds(t):
-    return round(t, 6)
+    return round(t, 6) * 1000.0
 
 
 def fire_locust_failure(**kwargs):
