@@ -15,11 +15,21 @@ def time_delta(t1, t2):
     return int((t2 - t1) * 1000)
 
 
+def round_seconds_to_microseconds(t):
+    return round(t, 6)
+
+
 def fire_locust_failure(**kwargs):
+    if 'response_time' in kwargs:
+        rt = round_seconds_to_microseconds(kwargs['response_time'])
+        kwargs['response_time'] = rt
     events.request_failure.fire(**kwargs)
 
 
 def fire_locust_success(**kwargs):
+    if 'response_time' in kwargs:
+        rt = round_seconds_to_microseconds(kwargs['response_time'])
+        kwargs['response_time'] = rt
     events.request_success.fire(**kwargs)
 
 
