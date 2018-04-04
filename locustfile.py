@@ -1,7 +1,6 @@
 import json
 import random
 import resource
-
 from locust import TaskSet, task
 
 from mqtt_locust import MQTTLocust
@@ -13,6 +12,7 @@ REPEAT = 100
 
 
 class MyTaskSet(TaskSet):
+
     @task(1)
     def qos2(self):
         self.client.publish(
